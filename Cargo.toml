@@ -1,6 +1,6 @@
 [package]
 name = "aix-rs"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 description = "Manage AI gateway profiles and launch AI coding tools with the right credentials"
 readme = "README.md"
