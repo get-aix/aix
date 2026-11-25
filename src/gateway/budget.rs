@@ -123,6 +123,7 @@ impl BudgetInfo {
             .and_then(Value::as_array)
             .ok_or_else(malformed)?
             .iter()
+            .filter(|layer| !is_unreported_layer(layer))
             .map(parse_layer)
             .collect::<Option<Vec<_>>>()
             .ok_or_else(malformed)?;
@@ -286,6 +287,16 @@ impl BudgetLayer {
                 .as_deref()
                 .is_none_or(|value| parse_litellm_duration(value).is_some())
     }
+}
+
+/// A layer with neither a cap nor any spend carries no limit information. AI Hub
+/// reports such scopes (for example `tenant`) with `null` money fields, so they
+/// are skipped instead of failing the whole budget read.
+fn is_unreported_layer(value: &Value) -> bool {
+    value.as_object().is_some_and(|layer| {
+        matches!(layer.get("budget_usd"), None | Some(Value::Null))
+            && matches!(layer.get("spent_usd"), None | Some(Value::Null))
+    })
 }
 
 fn parse_layer(value: &Value) -> Option<BudgetLayer> {
@@ -615,6 +626,46 @@ mod tests {
         assert_eq!(info.limited_by, None);
         assert_eq!(info.layers[0].budget_usd, None);
         assert_eq!(info.layers[0].remaining_usd, None);
+    }
+
+    #[test]
+    fn unreported_layers_with_null_money_are_skipped_and_the_cap_is_kept() {
+        // Shape served by AI Hub today: the tenant layer has no cap and no spend.
+        let info = BudgetInfo::from_response(&json!({
+            "key_spent_usd": "35.03",
+            "remaining_usd": "14.9682769095",
+            "limited_by": "personal",
+            "layers": [
+                {
+                    "scope": "key",
+                    "budget_usd": null,
+                    "spent_usd": "34.3109776640",
+                    "remaining_usd": null,
+                    "period_start": "2026-11-01T00:00:00Z"
+                },
+                {
+                    "scope": "personal",
+                    "budget_usd": "50.00",
+                    "spent_usd": "35.0317230905",
+                    "remaining_usd": "14.9682769095",
+                    "period_start": "2026-11-01T00:00:00Z"
+                },
+                {
+                    "scope": "tenant",
+                    "budget_usd": null,
+                    "spent_usd": null,
+                    "remaining_usd": null,
+                    "period_start": "2026-11-01T00:00:00Z"
+                }
+            ]
+        }))
+        .unwrap();
+
+        assert_eq!(info.limited_by.as_deref(), Some("personal"));
+        assert_eq!(info.remaining_usd, Some(14.968_276_909_5));
+        let scopes: Vec<&str> = info.layers.iter().map(|l| l.scope.as_str()).collect();
+        assert_eq!(scopes, ["key", "personal"]);
+        assert_eq!(info.layers[1].budget_usd, Some(50.0));
     }
 
     #[test]
