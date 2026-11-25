@@ -37,7 +37,6 @@ pub(crate) enum InstallMethod {
     },
     Homebrew,
     Scoop,
-    Winget,
     /// `.deb` from a GitHub release, installed with apt/dpkg.
     Deb,
     /// `.rpm` from a GitHub release, installed with dnf/zypper/rpm.
@@ -66,7 +65,6 @@ impl InstallMethod {
             Self::Nix { .. } => "Nix",
             Self::Homebrew => "Homebrew",
             Self::Scoop => "Scoop",
-            Self::Winget => "winget",
             Self::Deb => ".deb package",
             Self::Rpm => ".rpm package",
             Self::Aur { .. } => "AUR (pacman)",
@@ -109,9 +107,6 @@ pub(crate) fn detect(exe: &Path, probe: &dyn Probe) -> InstallMethod {
     }
     if norm.contains("/apps/aix/") && norm.contains("scoop") {
         return InstallMethod::Scoop;
-    }
-    if norm.contains("/winget/packages/") || norm.contains("/winget/links/") {
-        return InstallMethod::Winget;
     }
     if is_cargo_target_dir(&norm) {
         return InstallMethod::SourceBuild;
@@ -328,27 +323,13 @@ mod tests {
     }
 
     #[test]
-    fn scoop_and_winget_paths() {
+    fn scoop_path() {
         assert_eq!(
             detect_with(
                 r"C:\Users\me\scoop\apps\aix\current\aix.exe",
                 &FakeProbe::default()
             ),
             InstallMethod::Scoop
-        );
-        assert_eq!(
-            detect_with(
-                r"C:\Users\me\AppData\Local\Microsoft\WinGet\Packages\get-aix.aix_Microsoft.Winget.Source_8wekyb3d8bbwe\aix.exe",
-                &FakeProbe::default()
-            ),
-            InstallMethod::Winget
-        );
-        assert_eq!(
-            detect_with(
-                r"C:\Users\me\AppData\Local\Microsoft\WinGet\Links\aix.exe",
-                &FakeProbe::default()
-            ),
-            InstallMethod::Winget
         );
     }
 

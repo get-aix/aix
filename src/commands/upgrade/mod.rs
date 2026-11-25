@@ -26,7 +26,6 @@ use target::{Installed, Target, UpgradeState};
 
 const CRATE_NAME: &str = "aix-rs";
 const HOMEBREW_FORMULA: &str = "get-aix/tap/aix";
-const WINGET_ID: &str = "get-aix.aix";
 
 pub async fn run(check: bool, force: bool, timeout: Duration) -> Result<()> {
     let exe = current_exe()?;
@@ -351,19 +350,6 @@ fn plan(method: &InstallMethod, env: &Env) -> Plan {
                 note: None,
             },
             None => missing_tool("scoop", "scoop update aix"),
-        },
-        InstallMethod::Winget => match env.find("winget") {
-            Some(winget) => Plan::PackageManager {
-                step: Step {
-                    handoff: env.windows,
-                    ..Step::new(winget, &["upgrade", "--id", WINGET_ID, "--exact"])
-                },
-                note: None,
-            },
-            None => missing_tool(
-                "winget",
-                &format!("winget upgrade --id {WINGET_ID} --exact"),
-            ),
         },
         InstallMethod::Deb => plan_release_package(PackageKind::Deb, env),
         InstallMethod::Rpm => plan_release_package(PackageKind::Rpm, env),
@@ -977,8 +963,7 @@ fn remove_leftover_binary(exe: &Path) {
 fn current_exe() -> Result<PathBuf> {
     let exe = std::env::current_exe().wrap_err("could not locate the running aix binary")?;
     // Resolve symlinks (Homebrew's bin/aix, ~/.nix-profile/bin/aix, …) on Unix.
-    // On Windows, canonicalize adds a `\\?\` prefix and winget links are
-    // matched without resolving, so keep the path as is.
+    // On Windows, canonicalize adds a `\\?\` prefix, so keep the path as is.
     if cfg!(windows) {
         Ok(exe)
     } else {
@@ -1040,7 +1025,7 @@ mod tests {
 
     #[test]
     fn package_managers_upgrade_themselves() {
-        let env = env_with(&["brew", "scoop", "winget"]);
+        let env = env_with(&["brew", "scoop"]);
         assert_eq!(
             command_line(plan(&InstallMethod::Homebrew, &env)),
             "brew upgrade get-aix/tap/aix"
@@ -1048,10 +1033,6 @@ mod tests {
         assert_eq!(
             command_line(plan(&InstallMethod::Scoop, &env)),
             "scoop update aix"
-        );
-        assert_eq!(
-            command_line(plan(&InstallMethod::Winget, &env)),
-            "winget upgrade --id get-aix.aix --exact"
         );
     }
 
