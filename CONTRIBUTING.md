@@ -90,7 +90,7 @@ merging to `main`; every push to `main` publishes a new
 - [ ] **PowerShell env output** — run `aix env <profile> --format powershell` in a real PowerShell session and pipe to `Invoke-Expression`; confirm `$env:AIX_PROFILE` is set.
 - [ ] **Nushell env loading** — run `aix env <profile> --format nu` in a real Nushell session and source the output; confirm `$env.AIX_PROFILE` is set.
 - [ ] **cmd.exe env output** — run `aix env <profile> --format cmd > "%TEMP%\aix-env.cmd" && call "%TEMP%\aix-env.cmd"` in a real cmd.exe session; confirm `%AIX_PROFILE%` is set.
-- [ ] **`aix upgrade`** — for each install method you touched, install an older release that way, run `aix upgrade --check`, then `aix upgrade`, and confirm `aix --version` reports the new release. On Windows, also confirm the Scoop/winget hand-off window and that `aix.exe.old` is removed on the next run.
+- [ ] **`aix upgrade`** — for each install method you touched, install an older release that way, run `aix upgrade --check`, then `aix upgrade`, and confirm `aix --version` reports the new release. On Windows, also confirm the Scoop hand-off window and that `aix.exe.old` is removed on the next run.
 
 Scripted procedures for checks that need real tools or accounts live in
 [`tests/manual/`](tests/manual), for example the

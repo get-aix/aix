@@ -50,7 +50,7 @@ jobs:
         shell: bash
         env:
           # Windows: link the C runtime statically so the exe runs without the
-          # Visual C++ Redistributable (clean installs, winget validation).
+          # Visual C++ Redistributable (clean installs).
           RUSTFLAGS: ${{ matrix.rustflags }}
         run: ${{ matrix.cross && 'cross' || 'cargo' }} build --release --locked --target ${{ matrix.target }}
 

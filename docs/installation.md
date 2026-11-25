@@ -3,7 +3,7 @@
 aix is a single binary named `aix`. Pick one of the methods below; after
 installing, continue with [Configuration](configuration.md).
 
-- [Package managers](#package-managers): Homebrew, winget, Scoop, .deb/.rpm, AUR
+- [Package managers](#package-managers): Homebrew, Scoop, .deb/.rpm, AUR
 - [Installer scripts](#installer-scripts): prebuilt binary, no package manager needed
 - [Cargo](#cargo): prebuilt via cargo-binstall, or build from crates.io
 - [Manual download](#manual-download) — place the binary yourself
@@ -57,12 +57,6 @@ brew install aix
 `aix upgrade` (or `brew upgrade`) keeps it up to date. The one-liner `brew install get-aix/tap/aix`
 does the same thing. The formula lives in
 [get-aix/homebrew-tap](https://github.com/get-aix/homebrew-tap).
-
-### winget (Windows)
-
-```powershell
-winget install get-aix.aix
-```
 
 ### Scoop (Windows)
 
@@ -228,7 +222,6 @@ installed, then upgrades it the same way:
 |---|---|
 | Homebrew | `brew upgrade get-aix/tap/aix` |
 | Scoop | `scoop update aix` |
-| winget | `winget upgrade --id get-aix.aix --exact` |
 | `.deb` / `.rpm` | Downloads the new release package, verifies it against `SHA256SUMS`, and installs it with `apt`, `dpkg`, `dnf`, `zypper`, `yum`, or `rpm` (using `sudo` when needed) |
 | AUR | `paru -S --needed aix-rs-bin`, or `yay` if paru isn't installed |
 | `cargo binstall` | `cargo binstall aix-rs` |
@@ -272,7 +265,7 @@ A few cases need you to step in, and `aix upgrade` prints what to run:
 
 On Windows, a running `aix.exe` can't be overwritten. For installer-script and
 Cargo installs, aix renames itself to `aix.exe.old` before upgrading and deletes
-that file the next time `aix upgrade` runs. Scoop and winget upgrades run in a
+that file the next time `aix upgrade` runs. Scoop upgrades run in a
 new window that starts as soon as `aix upgrade` exits.
 
 `aix upgrade` exits 0 when it upgraded, found nothing newer, or only printed

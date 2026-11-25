@@ -1,16 +1,13 @@
 name: Package managers
 
-# Publishes a GitHub release to Homebrew (own tap), Scoop (own bucket), AUR and
-# winget. Called by release.yml after binaries are attached; can also be run
-# by hand (Actions → Package managers → Run workflow) to retry or backfill.
+# Publishes a GitHub release to Homebrew (own tap), Scoop (own bucket) and AUR.
+# Called by release.yml after binaries are attached; can also be run by hand
+# (Actions → Package managers → Run workflow) to retry or backfill.
 #
 # Each channel is skipped cleanly when its secret is not configured:
 #   HOMEBREW_TAP_DEPLOY_KEY  write deploy key on get-aix/homebrew-tap
 #   SCOOP_BUCKET_DEPLOY_KEY  write deploy key on get-aix/scoop-bucket
 #   AUR_SSH_PRIVATE_KEY      SSH key registered on the AUR account
-#   WINGET_TOKEN             classic PAT with `public_repo`, owner has a fork of
-#                            microsoft/winget-pkgs (set repo variable
-#                            WINGET_FORK_USER to that account)
 
 on:
   workflow_call:
@@ -143,39 +140,3 @@ jobs:
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: "Update to ${{ inputs.tag }}"
           test: true
-
-  winget:
-    name: winget
-    runs-on: ubuntu-latest
-    env:
-      TOKEN: ${{ secrets.WINGET_TOKEN }}
-    steps:
-      - if: env.TOKEN == ''
-        run: echo "::notice::WINGET_TOKEN not set; skipping winget"
-      - name: Check whether the package is in the winget catalog
-        id: catalog
-        if: env.TOKEN != ''
-        run: |
-          status=$(curl --silent --show-error --max-time 15 --output /dev/null --write-out '%{http_code}' \
-            https://api.github.com/repos/microsoft/winget-pkgs/contents/manifests/g/get-aix/aix)
-          case "$status" in
-            200)
-              echo "exists=true" >> "$GITHUB_OUTPUT"
-              ;;
-            404)
-              echo "exists=false" >> "$GITHUB_OUTPUT"
-              echo "::notice::get-aix.aix is not in microsoft/winget-pkgs yet; skipping winget until its initial package is merged"
-              ;;
-            *)
-              echo "Could not verify get-aix.aix in microsoft/winget-pkgs (HTTP $status)" >&2
-              exit 1
-              ;;
-          esac
-      - if: env.TOKEN != '' && steps.catalog.outputs.exists == 'true'
-        uses: vedantmgoyal9/winget-releaser@v2
-        with:
-          identifier: get-aix.aix
-          installers-regex: '-pc-windows-msvc\.exe$'
-          release-tag: ${{ inputs.tag }}
-          fork-user: ${{ vars.WINGET_FORK_USER || github.repository_owner }}
-          token: ${{ secrets.WINGET_TOKEN }}
